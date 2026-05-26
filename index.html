@@ -313,9 +313,13 @@ tbody tr:hover{background:#F7FBFF}
 <div id="loginPage" class="view">
   <div class="login-card">
     <div class="login-logo">
-      <div class="icon">🏫</div>
-      <h2>SPMB 2026</h2>
-      <p>Sistem Penerimaan Murid Baru</p>
+      <div class="icon" id="loginLogoWrap">
+        <img id="loginLogoImg" src="" alt="Logo Sekolah"
+             style="width:100%;height:100%;object-fit:contain;border-radius:10px;display:none;">
+        <span id="loginLogoDefault">🏫</span>
+      </div>
+      <h2 id="loginSchoolName">SPMB 2026</h2>
+      <p id="loginTagline">Sistem Penerimaan Murid Baru</p>
     </div>
     <div class="form-group">
       <label>Username</label>
@@ -688,6 +692,7 @@ async function init() {
       showAdmin();
     } else {
       showView('loginPage');
+      await loadLoginPageSettings(); // ← tambahkan ini
     }
   }
 }
@@ -787,7 +792,34 @@ async function loadSettings() {
     document.getElementById('sideYear').textContent = 'T.A. '+(r.data['TAHUN_AJARAN']||'2025/2026');
   }
 }
+async function loadLoginPageSettings() {
+  try {
+    const r = await api('setting', 'get');
+    if (r.success && r.data) {
+      const logoUrl    = r.data['LOGO_URL'] || '';
+      const namaSekolah = r.data['NAMA_SEKOLAH'] || 'SPMB 2026';
+      const tagline    = r.data['TAGLINE'] || 'Sistem Penerimaan Murid Baru';
 
+      // Update nama & tagline
+      const elName = document.getElementById('loginSchoolName');
+      const elTag  = document.getElementById('loginTagline');
+      if (elName) elName.textContent = namaSekolah;
+      if (elTag)  elTag.textContent  = tagline;
+
+      // Tampilkan logo jika ada, atau pakai default emoji
+      const imgEl     = document.getElementById('loginLogoImg');
+      const defaultEl = document.getElementById('loginLogoDefault');
+      if (logoUrl && imgEl && defaultEl) {
+        imgEl.src = logoUrl;
+        imgEl.style.display = 'block';
+        defaultEl.style.display = 'none';
+      }
+    }
+  } catch(e) {
+    // Gagal fetch setting → biarkan tampilan default
+    console.warn('loadLoginPageSettings:', e);
+  }
+}
 function loadPengaturanForm() {
   const s = APP.settings;
   document.getElementById('set-nama').value   = s['NAMA_SEKOLAH']||'';
