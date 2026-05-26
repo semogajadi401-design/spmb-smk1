@@ -201,7 +201,7 @@ tbody tr:hover{background:#F7FBFF}
 
 .pub-section-title{font-size:14px;font-weight:800;color:var(--primary);margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 
-.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:#FAFCFF}
+.upload-zone{display:block;width:100%;box-sizing:border-box;border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:#FAFCFF}
 .upload-zone:hover{border-color:var(--primary-light);background:#EBF5FB}
 .upload-zone.uploaded{border-color:var(--success);background:#F0FFF4;border-style:solid}
 .upload-zone input{display:none}
@@ -1108,7 +1108,7 @@ function buildUploadZones() {
     <div style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${p.nama} ${p.wajib?'<span style="color:var(--danger);font-size:11px">*Wajib</span>':'<span style="color:var(--text3);font-size:11px">(Opsional)</span>'}</div>
       ${p.deskripsi?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">${p.deskripsi}</div>`:''}
-      <label class="upload-zone" id="uz-${p.id}" onclick="document.getElementById('ufi-${p.id}').click()">
+      <label class="upload-zone" id="uz-${p.id}" for="ufi-${p.id}">
         <input type="file" id="ufi-${p.id}" accept="image/jpeg,image/png,application/pdf" onchange="handleFileSelect('${p.id}','${p.nama}',this)">
         <div id="uzc-${p.id}">
           <div class="uz-icon">📄</div>
