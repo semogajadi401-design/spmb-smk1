@@ -13,13 +13,27 @@ module.exports = async (req, res) => {
 };
 
 async function login({ username, password }) {
-  if (!username || !password) return { success: false, message: 'Username dan password wajib diisi' };
-  const { data } = await supabase.from('spmb_admin')
-    .select('*').eq('username', username).eq('password', hashPassword(password)).single();
-  if (!data) return { success: false, message: 'Username atau password salah' };
-  return { success: true, nama: data.nama, username: data.username };
-}
+  if (!username || !password) 
+    return { success: false, message: 'Username dan password wajib diisi' };
+  
+  const hashed = hashPassword(password);
+  
+  // Cek username dulu
+  const { data: user, error } = await supabase
+    .from('spmb_admin')
+    .select('*')
+    .eq('username', username)
+    .single();
 
+  if (error || !user) 
+    return { success: false, message: 'Username atau password salah' };
+
+  // Cek password
+  if (user.password !== hashed)
+    return { success: false, message: 'Username atau password salah' };
+
+  return { success: true, nama: user.nama, username: user.username };
+}
 async function changePassword({ username, oldPassword, newPassword }) {
   const { data } = await supabase.from('spmb_admin')
     .select('*').eq('username', username).eq('password', hashPassword(oldPassword)).single();
