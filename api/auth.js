@@ -18,17 +18,22 @@ async function login({ username, password }) {
   
   const hashed = hashPassword(password);
   
-  // Cek username dulu
+  // LOG untuk debug
+  console.log('Username dicari:', username);
+  console.log('Hash yang digenerate:', hashed);
+
   const { data: user, error } = await supabase
     .from('spmb_admin')
     .select('*')
     .eq('username', username)
-    .single();
+    .maybeSingle();  // ganti single() → maybeSingle()
+
+  console.log('Data dari DB:', user);
+  console.log('Error dari DB:', error);
 
   if (error || !user) 
     return { success: false, message: 'Username atau password salah' };
 
-  // Cek password
   if (user.password !== hashed)
     return { success: false, message: 'Username atau password salah' };
 
