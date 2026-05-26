@@ -223,15 +223,85 @@ tbody tr:hover{background:#F7FBFF}
 .tutup-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1;text-align:center}
 .tutup-card{background:rgba(255,255,255,.95);border-radius:24px;padding:48px 40px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 
+/* ── HAMBURGER ── */
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--primary);color:#fff;border:none;border-radius:10px;width:42px;height:42px;font-size:20px;cursor:pointer;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
+
+/* ── BOTTOM NAV (mobile admin) ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--primary-dark);z-index:150;padding:0 4px 4px;border-top:1px solid rgba(255,255,255,.1)}
+.bottom-nav-inner{display:flex;justify-content:space-around}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.55);font-size:9px;font-weight:700;letter-spacing:.3px;transition:.2s;flex:1;text-align:center;border:none;background:none;font-family:inherit}
+.bn-item.active{color:#fff;background:rgba(255,255,255,.15)}
+.bn-item .bn-icon{font-size:20px;line-height:1}
+
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%);transition:.3s}.sidebar.open{transform:none}
+  /* Sidebar */
+  .hamburger{display:flex}
+  .sidebar{transform:translateX(-100%);transition:.3s;z-index:150}
+  .sidebar.open{transform:none}
+  .sidebar-overlay.open{display:block}
   .admin-main{margin-left:0}
+  .page-header{padding:14px 16px;padding-left:64px}
+  .page-header h2{font-size:16px}
+  .page-body{padding:14px}
+
+  /* Bottom nav */
+  .bottom-nav{display:block}
+  .admin-main{padding-bottom:72px}
+
+  /* Stat grid */
+  .stat-grid{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .stat-card{padding:14px}
+  .stat-card .sc-val{font-size:26px}
+  .stat-card .sc-icon{font-size:22px;margin-bottom:4px}
+
+  /* Dashboard grid */
+  .dash-grid{grid-template-columns:1fr !important}
+
+  /* Table - card style on mobile */
+  .table-wrap{border:none;border-radius:0;overflow:visible}
+  table thead{display:none}
+  table tbody tr{display:block;background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:var(--shadow);border:1px solid var(--border);padding:12px}
+  table tbody td{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border:none;font-size:13px}
+  table tbody td::before{content:attr(data-label);font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;min-width:90px;flex-shrink:0}
+  table tbody td:first-child{display:none}
+  table tbody td:last-child{justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);margin-top:4px}
+
+  /* Forms */
   .form-row{grid-template-columns:1fr}
+  .modal{border-radius:16px 16px 0 0;max-height:92vh;margin-top:auto}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal-body{padding:16px 20px}
+  .modal-head{padding:16px 20px 12px}
+  .modal-foot{padding:12px 20px 16px;flex-wrap:wrap}
+  .detail-grid{grid-template-columns:1fr 1fr}
+
+  /* Toolbar */
+  .toolbar{gap:8px}
+  .search-box{min-width:0}
+
+  /* Pengaturan */
+  .pengaturan-grid{grid-template-columns:1fr !important}
+
+  /* Page header action */
+  .page-header .btn{font-size:11px;padding:7px 12px}
+
+  /* Desa item name */
+  .desa-item .di-name{min-width:90px}
+}
+
+@media(max-width:400px){
   .stat-grid{grid-template-columns:1fr 1fr}
-  .detail-grid{grid-template-columns:1fr}
-  .pub-form-body{padding:20px}
-  .pub-header{padding:32px 16px 24px}
+  .pub-form-body{padding:16px}
+  .pub-form-header{padding:18px 20px}
+  .pub-header{padding:24px 12px 18px}
+  .login-card{padding:28px 20px}
+}
+
+@media(min-width:769px){
+  .bottom-nav{display:none!important}
+  .hamburger{display:none!important}
 }
 </style>
 </head>
@@ -256,12 +326,16 @@ tbody tr:hover{background:#F7FBFF}
       <input type="password" id="loginPass" class="form-control" placeholder="Masukkan password" autocomplete="current-password">
     </div>
     <button class="btn btn-primary btn-lg" style="width:100%" onclick="doLogin()">🔐 Masuk</button>
-    <p style="text-align:center;font-size:12px;color:var(--text3);margin-top:20px">Agrabil @2026</p>
+    <p style="text-align:center;font-size:12px;color:var(--text3);margin-top:20px">Default: admin / admin123</p>
   </div>
 </div>
 
 <!-- ══ ADMIN PAGE ══════════════════════════════════════ -->
 <div id="adminPage" class="view" style="display:none">
+  <!-- Hamburger -->
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
@@ -302,7 +376,7 @@ tbody tr:hover{background:#F7FBFF}
           <div class="stat-card" style="--c:var(--primary)"><div class="sc-icon">👥</div><div class="sc-val" id="st-total">-</div><div class="sc-label">Total Pendaftar</div></div>
           <div class="stat-card" style="--c:var(--info)"><div class="sc-icon">🆕</div><div class="sc-val" id="st-baru">-</div><div class="sc-label">Pendaftar Baru</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="dash-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
           <div class="card">
             <div class="section-header"><div><h3>📍 Asal Desa Pendaftar</h3><p>Distribusi berdasarkan desa</p></div></div>
             <div class="desa-list" id="desaList"><p style="color:var(--text3);font-size:13px">Memuat data...</p></div>
@@ -432,6 +506,17 @@ tbody tr:hover{background:#F7FBFF}
     </div>
 
   </main>
+
+  <!-- Bottom Nav (mobile) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="bottom-nav-inner">
+      <button class="bn-item active" data-page="dashboard" onclick="showPage('dashboard')"><span class="bn-icon">📊</span>Dashboard</button>
+      <button class="bn-item" data-page="pendaftar" onclick="showPage('pendaftar')"><span class="bn-icon">👥</span>Pendaftar</button>
+      <button class="bn-item" data-page="fileLengkap" onclick="showPage('fileLengkap')"><span class="bn-icon">📋</span>File</button>
+      <button class="bn-item" data-page="persyaratan" onclick="showPage('persyaratan')"><span class="bn-icon">📎</span>Syarat</button>
+      <button class="bn-item" data-page="pengaturan" onclick="showPage('pengaturan')"><span class="bn-icon">⚙️</span>Atur</button>
+    </div>
+  </nav>
 </div>
 
 <!-- ══ PUBLIC PAGE ═════════════════════════════════════ -->
@@ -665,14 +750,29 @@ async function showAdmin() {
 function showPage(name) {
   document.querySelectorAll('.admin-pg').forEach(p => p.style.display='none');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n => n.classList.remove('active'));
   document.getElementById('pg-'+name).style.display='block';
-  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  const sideNav = document.querySelector(`.nav-item[data-page="${name}"]`);
+  if (sideNav) sideNav.classList.add('active');
+  const bnItem = document.querySelector(`.bn-item[data-page="${name}"]`);
+  if (bnItem) bnItem.classList.add('active');
+  closeSidebar();
   if (name==='dashboard') loadDashboard();
   if (name==='pendaftar') loadPendaftar();
   if (name==='fileLengkap') loadFileLengkap();
   if (name==='persyaratan') loadPersyaratan();
   if (name==='pengaturan') loadPengaturanForm();
   if (name==='linkDaftar') loadLinkDaftar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
 }
 
 // ════════════════════════════════════════════════════
@@ -840,16 +940,16 @@ function filterPendaftar() {
 
 function renderPendaftarTable(data) {
   const tbody = document.getElementById('pendaftarTable');
-  if (!data.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">Tidak ada data</td></tr>'; return; }
+  if (!data.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Tidak ada data</td></tr>'; return; }
   tbody.innerHTML = data.map((p,i) => `
     <tr>
       <td style="color:var(--text3)">${i+1}</td>
-      <td><strong>${p.nama_lengkap}</strong><br><span style="font-size:11px;color:var(--text3)">${p.nisn||'-'}</span></td>
-      <td>${p.nisn||'-'}</td>
-      <td>${p.nama_desa||'-'}</td>
-      <td>${p.no_hp||'-'}</td>
-      <td style="font-size:11px">${formatDate(p.created_at)}</td>
-      <td><button class="btn btn-ghost btn-sm btn-icon" onclick="openDetail('${p.id}')" title="Lihat Detail">👁️</button></td>
+      <td data-label="Nama"><strong>${p.nama_lengkap}</strong><br><span style="font-size:11px;color:var(--text3)">${p.nisn||'-'}</span></td>
+      <td data-label="NISN">${p.nisn||'-'}</td>
+      <td data-label="Desa">${p.nama_desa||'-'}</td>
+      <td data-label="No. HP">${p.no_hp||'-'}</td>
+      <td data-label="Tgl Daftar" style="font-size:11px">${formatDate(p.created_at)}</td>
+      <td><button class="btn btn-ghost btn-sm btn-icon" onclick="openDetail('${p.id}')" title="Lihat Detail">👁️ Detail</button></td>
     </tr>`).join('');
 }
 
