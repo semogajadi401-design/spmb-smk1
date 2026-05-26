@@ -716,6 +716,13 @@ function loadPengaturanForm() {
   document.getElementById('set-alamat').value = s['ALAMAT_SEKOLAH']||'';
   document.getElementById('set-tagline').value= s['TAGLINE']||'';
   document.getElementById('set-logo').value   = s['LOGO_URL']||'';
+  const existingLogo = s['LOGO_URL']||'';
+  if (existingLogo) {
+    document.getElementById('logoPreviewWrap').innerHTML = `
+      <img src="${existingLogo}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;margin-bottom:6px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3)">Klik untuk ganti logo</div>
+    `;
+  }
   document.getElementById('set-kuota').value  = s['KUOTA']||'100';
   document.getElementById('set-link').value   = s['LINK_AKTIF']||'true';
   document.getElementById('set-pesan').value  = s['PESAN_TUTUP']||'';
