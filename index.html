@@ -382,7 +382,18 @@ tbody tr:hover{background:#F7FBFF}
           </div>
           <div class="form-group"><label>Alamat Sekolah</label><input type="text" id="set-alamat" class="form-control" placeholder="Jl. Pendidikan No.1, ..."></div>
           <div class="form-group"><label>Tagline</label><input type="text" id="set-tagline" class="form-control" placeholder="cth: Mendidik Generasi Unggul"></div>
-          <div class="form-group"><label>URL Logo <span class="form-hint" style="display:inline;font-size:11px">(Upload ke imgbb.com lalu paste link-nya)</span></label><input type="text" id="set-logo" class="form-control" placeholder="https://..."></div>
+          <div class="form-group">
+            <label>Logo Sekolah</label>
+            <div id="logoUploadArea" onclick="document.getElementById('logoFileInput').click()" style="border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:.2s;background:var(--bg)" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div id="logoPreviewWrap">
+                <div style="font-size:32px;margin-bottom:6px">🖼️</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text2)">Klik untuk pilih gambar logo</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px">PNG, JPG • Maks. 2MB • Disarankan ukuran kotak (1:1)</div>
+              </div>
+            </div>
+            <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoSelect(this)">
+            <input type="hidden" id="set-logo">
+          </div>
         </div>
         <div class="card" style="margin-top:16px">
           <h3 style="font-size:15px;font-weight:800;color:var(--primary);margin-bottom:20px">🔧 Pengaturan SPMB</h3>
@@ -709,8 +720,53 @@ function loadPengaturanForm() {
   document.getElementById('set-link').value   = s['LINK_AKTIF']||'true';
   document.getElementById('set-pesan').value  = s['PESAN_TUTUP']||'';
 }
+function handleLogoSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2*1024*1024) { toast('Logo terlalu besar. Maks 2MB', 'error'); input.value=''; return; }
 
+  // Tampilkan preview langsung
+  const url = URL.createObjectURL(file);
+  document.getElementById('logoPreviewWrap').innerHTML = `
+    <img src="${url}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;margin-bottom:6px;border:1px solid var(--border)">
+    <div style="font-size:12px;color:var(--text2);font-weight:600">✅ ${file.name}</div>
+    <div style="font-size:11px;color:var(--text3)">Klik Simpan untuk mengupload</div>
+  `;
+
+  // Simpan file untuk diupload nanti
+  APP.pendingLogoFile = file;
+}
+
+async function uploadLogoToStorage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1];
+      const ext = file.type === 'image/png' ? 'png' : 'jpg';
+      const r = await api('pendaftar', 'uploadLogo', {
+        base64, tipe: file.type, ext
+      });
+      if (r.success) resolve(r.url);
+      else reject(new Error(r.message));
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 async function savePengaturan() {
+  // Upload logo dulu jika ada file baru
+  if (APP.pendingLogoFile) {
+    toast('Mengupload logo...', 'info', 10000);
+    try {
+      const logoUrl = await uploadLogoToStorage(APP.pendingLogoFile);
+      document.getElementById('set-logo').value = logoUrl;
+      APP.pendingLogoFile = null;
+    } catch(e) {
+      toast('Gagal upload logo: ' + e.message, 'error');
+      return;
+    }
+  }
+
   const settings = {
     NAMA_SEKOLAH:   document.getElementById('set-nama').value.trim(),
     NPSN:           document.getElementById('set-npsn').value.trim(),
@@ -722,8 +778,8 @@ async function savePengaturan() {
     LINK_AKTIF:     document.getElementById('set-link').value,
     PESAN_TUTUP:    document.getElementById('set-pesan').value.trim()
   };
-  const r = await api('setting','update',{settings});
-  toast(r.message, r.success?'success':'error');
+  const r = await api('setting', 'update', { settings });
+  toast(r.message, r.success ? 'success' : 'error');
   if (r.success) { await loadSettings(); }
 }
 
