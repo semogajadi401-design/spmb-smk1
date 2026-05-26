@@ -1,0 +1,8 @@
+{
+  "name": "spmb-smk",
+  "version": "1.0.0",
+  "description": "Sistem Penerimaan Murid Baru SMK",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}

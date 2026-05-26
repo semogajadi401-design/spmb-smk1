@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SPMB - Penerimaan Murid Baru</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1B4F72;--primary-light:#2980B9;--primary-dark:#154360;
+  --accent:#F39C12;--accent-light:#F8C471;
+  --success:#27AE60;--danger:#E74C3C;--warning:#F39C12;--info:#2980B9;
+  --bg:#F0F4F8;--card:#fff;--border:#D5E8F3;
+  --text:#1A2733;--text2:#4A6275;--text3:#8AA4B5;
+  --shadow:0 2px 12px rgba(27,79,114,0.10);
+  --shadow-lg:0 8px 32px rgba(27,79,114,0.15);
+  --radius:14px;--radius-sm:8px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── TOAST ── */
+#toastWrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;max-width:340px;animation:slideIn .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.success{background:var(--success)}.toast.error{background:var(--danger)}
+.toast.info{background:var(--info)}.toast.warning{background:var(--warning)}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-head{padding:24px 28px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:17px;font-weight:700;color:var(--primary)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1}
+.modal-body{padding:24px 28px}
+.modal-foot{padding:16px 28px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border)}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-group label .req{color:var(--danger);margin-left:2px}
+.form-control{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);transition:.2s;background:#fff}
+.form-control:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(41,128,185,.12)}
+.form-control.error{border-color:var(--danger)}
+select.form-control{cursor:pointer}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.2s;white-space:nowrap;font-family:inherit}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover:not(:disabled){background:#D68910}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--text2);border:1.5px solid var(--border)}.btn-ghost:hover{background:var(--border)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-lg{padding:14px 28px;font-size:15px;border-radius:12px}
+.btn-icon{padding:8px;border-radius:8px}
+
+/* ── VIEWS ── */
+.view{display:none}.view.active{display:block}
+
+/* ── LOGIN PAGE ── */
+#loginPage{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 50%,var(--primary-light) 100%);
+  position:relative;overflow:hidden}
+#loginPage::before{content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.login-card{background:#fff;border-radius:24px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative;z-index:1}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .icon{width:64px;height:64px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;box-shadow:0 4px 16px rgba(27,79,114,.3)}
+.login-logo h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--primary);font-weight:800}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* ── ADMIN LAYOUT ── */
+#adminPage{display:flex;min-height:100vh}
+.sidebar{width:240px;background:linear-gradient(180deg,var(--primary-dark) 0%,var(--primary) 100%);color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo .s-icon{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px}
+.sidebar-logo h3{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.3}
+.sidebar-logo p{font-size:10px;opacity:.6;margin-top:2px}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.75);transition:.2s;margin-bottom:2px}
+.nav-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.18);color:#fff}
+.nav-item .ni{font-size:16px;width:20px;text-align:center}
+.sidebar-bottom{padding:16px 12px;border-top:1px solid rgba(255,255,255,.1)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.08)}
+.sidebar-user .su-av{width:34px;height:34px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
+.sidebar-user .su-info{flex:1;min-width:0}
+.sidebar-user .su-name{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-user .su-role{font-size:10px;color:rgba(255,255,255,.5)}
+
+.admin-main{margin-left:240px;flex:1;min-height:100vh}
+.page-header{background:#fff;padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.page-header h2{font-size:18px;font-weight:800;color:var(--primary)}
+.page-header p{font-size:12px;color:var(--text3);margin-top:2px}
+.page-body{padding:28px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-sm{padding:16px}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid var(--border);position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--primary))}
+.stat-card .sc-icon{font-size:28px;margin-bottom:8px}
+.stat-card .sc-val{font-size:32px;font-weight:800;color:var(--text);line-height:1}
+.stat-card .sc-label{font-size:12px;color:var(--text3);margin-top:4px;font-weight:600}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--bg);padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+tbody td{padding:12px 14px;border-top:1px solid var(--border);vertical-align:middle}
+tbody tr:hover{background:#F7FBFF}
+
+/* ── BADGE STATUS ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-baru{background:#EBF5FB;color:#2980B9}
+.badge-diverifikasi{background:#FEF9E7;color:#D68910}
+.badge-diterima{background:#EAFAF1;color:#27AE60}
+.badge-ditolak{background:#FDEDEC;color:#E74C3C}
+
+/* ── SEARCH & FILTER ── */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.search-box{position:relative;flex:1;min-width:200px}
+.search-box input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;background:#fff}
+.search-box input:focus{outline:none;border-color:var(--primary-light)}
+.search-box::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px}
+
+/* ── FILE ITEM ── */
+.file-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff}
+.file-item.uploaded{border-color:#B7E4C7;background:#F0FFF4}
+.file-item.missing{border-color:#F5B7B1;background:#FFF5F5}
+.fi-icon{font-size:22px;flex-shrink:0}
+.fi-info{flex:1;min-width:0}
+.fi-name{font-size:13px;font-weight:700;color:var(--text)}
+.fi-desc{font-size:11px;color:var(--text3)}
+
+/* ── DESA CHART ── */
+.desa-list{display:flex;flex-direction:column;gap:8px}
+.desa-item{display:flex;align-items:center;gap:10px}
+.desa-item .di-name{font-size:13px;font-weight:600;color:var(--text);min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.desa-bar-wrap{flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+.desa-bar{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--primary),var(--primary-light));transition:width .6s ease}
+.desa-item .di-count{font-size:12px;font-weight:700;color:var(--primary);min-width:28px;text-align:right}
+
+/* ── SECTION HEADERS ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-header h3{font-size:15px;font-weight:800;color:var(--text)}
+.section-header p{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* ── DETAIL MODAL EXTRA ── */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.detail-field{background:var(--bg);border-radius:8px;padding:12px}
+.detail-field .df-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.detail-field .df-val{font-size:13px;font-weight:600;color:var(--text)}
+
+/* ══════════════════════════════════════════
+   PUBLIC REGISTRATION PAGE
+══════════════════════════════════════════ */
+#publicPage{min-height:100vh;background:linear-gradient(160deg,#0D3B6E 0%,#1B6CA8 50%,#1A9BD7 100%);display:flex;flex-direction:column}
+
+/* Animated background */
+#publicPage::before{content:'';position:fixed;inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3C/svg%3E") repeat;
+  z-index:0;pointer-events:none}
+
+.pub-header{position:relative;z-index:1;text-align:center;padding:48px 20px 36px}
+.pub-logo-wrap{display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;border-radius:22px;background:rgba(255,255,255,0.18);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,0.25);margin-bottom:16px;overflow:hidden}
+.pub-logo-wrap img{width:100%;height:100%;object-fit:contain;border-radius:18px}
+.pub-logo-wrap .pub-logo-icon{font-size:40px}
+.pub-school-name{font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,32px);font-weight:800;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.3);line-height:1.2}
+.pub-school-addr{font-size:13px;color:rgba(255,255,255,.75);margin-top:6px;max-width:480px;margin-left:auto;margin-right:auto}
+.pub-tagline{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(8px);padding:6px 18px;border-radius:30px;font-size:12px;color:rgba(255,255,255,.9);font-weight:600;margin-top:12px;letter-spacing:.5px;text-transform:uppercase}
+
+.pub-ribbon{position:relative;z-index:1;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(255,255,255,.15);padding:12px 20px;text-align:center}
+.pub-ribbon span{font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px}
+.pub-ribbon .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-light);margin:0 8px;vertical-align:middle;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+
+.pub-form-wrap{position:relative;z-index:1;flex:1;padding:0 20px 48px}
+.pub-form-card{max-width:680px;margin:0 auto;background:rgba(255,255,255,.97);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+
+.pub-form-header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);padding:24px 32px;color:#fff}
+.pub-form-header h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
+.pub-form-header p{font-size:12px;opacity:.8;margin-top:4px}
+.pub-form-steps{display:flex;gap:0;margin-top:16px}
+.pub-step{flex:1;text-align:center;padding:8px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;border-top:2px solid rgba(255,255,255,.2);transition:.3s}
+.pub-step.active{color:#fff;border-top-color:#fff}
+.pub-step.done{color:var(--accent-light);border-top-color:var(--accent-light)}
+
+.pub-form-body{padding:28px 32px}
+.pub-form-section{display:none}.pub-form-section.active{display:block}
+
+.pub-section-title{font-size:14px;font-weight:800;color:var(--primary);margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:#FAFCFF}
+.upload-zone:hover{border-color:var(--primary-light);background:#EBF5FB}
+.upload-zone.uploaded{border-color:var(--success);background:#F0FFF4;border-style:solid}
+.upload-zone input{display:none}
+.uz-icon{font-size:28px;margin-bottom:6px}
+.uz-text{font-size:12px;font-weight:700;color:var(--text2)}
+.uz-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.uz-preview{display:flex;align-items:center;gap:10px;text-align:left;justify-content:center}
+.uz-preview img{width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+.uz-preview .uz-fname{font-size:12px;font-weight:700;color:var(--success)}
+
+.pub-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+/* ── SUCCESS PAGE ── */
+.success-wrap{padding:40px 32px;text-align:center}
+.success-icon{font-size:64px;margin-bottom:16px;animation:bounceIn .5s ease}
+@keyframes bounceIn{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-wrap h3{font-family:'Playfair Display',serif;font-size:24px;color:var(--primary);font-weight:800;margin-bottom:8px}
+.success-wrap p{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:4px}
+.success-id{display:inline-block;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:8px 20px;font-size:14px;font-weight:800;color:var(--primary);margin:16px 0}
+
+/* TUTUP PAGE */
+.tutup-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1;text-align:center}
+.tutup-card{background:rgba(255,255,255,.95);border-radius:24px;padding:48px 40px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:.3s}.sidebar.open{transform:none}
+  .admin-main{margin-left:0}
+  .form-row{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .detail-grid{grid-template-columns:1fr}
+  .pub-form-body{padding:20px}
+  .pub-header{padding:32px 16px 24px}
+}
+</style>
+</head>
+<body>
+
+<div id="toastWrap"></div>
+
+<!-- ══ LOGIN PAGE ══════════════════════════════════════ -->
+<div id="loginPage" class="view">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">🏫</div>
+      <h2>SPMB Admin</h2>
+      <p>Sistem Penerimaan Murid Baru</p>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" class="form-control" placeholder="Masukkan username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" class="form-control" placeholder="Masukkan password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-lg" style="width:100%" onclick="doLogin()">🔐 Masuk</button>
+    <p style="text-align:center;font-size:12px;color:var(--text3);margin-top:20px">Default: admin / admin123</p>
+  </div>
+</div>
+
+<!-- ══ ADMIN PAGE ══════════════════════════════════════ -->
+<div id="adminPage" class="view" style="display:none">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="s-icon" id="sideLogoIcon">🏫</div>
+      <h3 id="sideSchoolName">SPMB SMK</h3>
+      <p id="sideYear">Tahun Ajaran 2025/2026</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showPage('pendaftar')" data-page="pendaftar"><span class="ni">👥</span> Data Pendaftar</div>
+      <div class="nav-item" onclick="showPage('fileLengkap')" data-page="fileLengkap"><span class="ni">📋</span> File Belum Lengkap</div>
+      <div class="nav-item" onclick="showPage('persyaratan')" data-page="persyaratan"><span class="ni">📎</span> Persyaratan Upload</div>
+      <div class="nav-item" onclick="showPage('pengaturan')" data-page="pengaturan"><span class="ni">⚙️</span> Pengaturan</div>
+      <div class="nav-item" onclick="showPage('linkDaftar')" data-page="linkDaftar"><span class="ni">🔗</span> Link Pendaftaran</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="su-av" id="suAv">A</div>
+        <div class="su-info">
+          <div class="su-name" id="suName">Admin</div>
+          <div class="su-role">Administrator</div>
+        </div>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="logout()" title="Keluar" style="color:#fff;background:rgba(255,255,255,.1);border:none">🚪</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <!-- Dashboard -->
+    <div id="pg-dashboard" class="admin-pg">
+      <div class="page-header">
+        <div><h2>Dashboard</h2><p>Ringkasan data penerimaan murid baru</p></div>
+        <button class="btn btn-primary btn-sm" onclick="exportExcel()">⬇️ Export Excel</button>
+      </div>
+      <div class="page-body">
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card" style="--c:var(--primary)"><div class="sc-icon">👥</div><div class="sc-val" id="st-total">-</div><div class="sc-label">Total Pendaftar</div></div>
+          <div class="stat-card" style="--c:var(--info)"><div class="sc-icon">🆕</div><div class="sc-val" id="st-baru">-</div><div class="sc-label">Baru</div></div>
+          <div class="stat-card" style="--c:var(--warning)"><div class="sc-icon">🔍</div><div class="sc-val" id="st-verif">-</div><div class="sc-label">Diverifikasi</div></div>
+          <div class="stat-card" style="--c:var(--success)"><div class="sc-icon">✅</div><div class="sc-val" id="st-terima">-</div><div class="sc-label">Diterima</div></div>
+          <div class="stat-card" style="--c:var(--danger)"><div class="sc-icon">❌</div><div class="sc-val" id="st-tolak">-</div><div class="sc-label">Ditolak</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="card">
+            <div class="section-header"><div><h3>📍 Asal Desa Pendaftar</h3><p>Distribusi berdasarkan desa</p></div></div>
+            <div class="desa-list" id="desaList"><p style="color:var(--text3);font-size:13px">Memuat data...</p></div>
+          </div>
+          <div class="card">
+            <div class="section-header"><div><h3>🕐 Pendaftar Terbaru</h3><p>10 pendaftar terakhir</p></div></div>
+            <div id="recentList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Pendaftar -->
+    <div id="pg-pendaftar" class="admin-pg" style="display:none">
+      <div class="page-header">
+        <div><h2>Data Pendaftar</h2><p>Kelola semua data calon siswa</p></div>
+        <button class="btn btn-primary btn-sm" onclick="exportExcel()">⬇️ Export Excel</button>
+      </div>
+      <div class="page-body">
+        <div class="toolbar">
+          <div class="search-box"><input type="text" id="searchInput" placeholder="Cari nama pendaftar..." oninput="filterPendaftar()"></div>
+          <select class="form-control" style="width:auto" id="statusFilter" onchange="filterPendaftar()">
+            <option value="Semua">Semua Status</option>
+            <option value="Baru">Baru</option>
+            <option value="Diverifikasi">Diverifikasi</option>
+            <option value="Diterima">Diterima</option>
+            <option value="Ditolak">Ditolak</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Nama Lengkap</th><th>NISN</th><th>Asal Desa</th>
+              <th>No. HP</th><th>Tgl Daftar</th><th>Status</th><th>Aksi</th>
+            </tr></thead>
+            <tbody id="pendaftarTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Belum Lengkap -->
+    <div id="pg-fileLengkap" class="admin-pg" style="display:none">
+      <div class="page-header"><div><h2>File Belum Lengkap</h2><p>Pendaftar yang belum mengunggah semua dokumen</p></div></div>
+      <div class="page-body">
+        <div id="fileLengkapList"></div>
+      </div>
+    </div>
+
+    <!-- Persyaratan -->
+    <div id="pg-persyaratan" class="admin-pg" style="display:none">
+      <div class="page-header">
+        <div><h2>Persyaratan Upload</h2><p>Kelola dokumen yang harus diunggah pendaftar</p></div>
+        <button class="btn btn-primary btn-sm" onclick="openModalPersyaratan()">➕ Tambah Persyaratan</button>
+      </div>
+      <div class="page-body">
+        <div id="persyaratanList"></div>
+      </div>
+    </div>
+
+    <!-- Pengaturan -->
+    <div id="pg-pengaturan" class="admin-pg" style="display:none">
+      <div class="page-header"><div><h2>Pengaturan</h2><p>Konfigurasi sekolah dan sistem SPMB</p></div></div>
+      <div class="page-body" style="max-width:640px">
+        <div class="card">
+          <h3 style="font-size:15px;font-weight:800;color:var(--primary);margin-bottom:20px">🏫 Informasi Sekolah</h3>
+          <div class="form-group"><label>Nama Sekolah <span class="req">*</span></label><input type="text" id="set-nama" class="form-control" placeholder="cth: SMK NEGERI 1 TATAKALAI"></div>
+          <div class="form-row">
+            <div class="form-group"><label>NPSN</label><input type="text" id="set-npsn" class="form-control" placeholder="Nomor Pokok Sekolah"></div>
+            <div class="form-group"><label>Tahun Ajaran</label><input type="text" id="set-tahun" class="form-control" placeholder="cth: 2025/2026"></div>
+          </div>
+          <div class="form-group"><label>Alamat Sekolah</label><input type="text" id="set-alamat" class="form-control" placeholder="Jl. Pendidikan No.1, ..."></div>
+          <div class="form-group"><label>Tagline</label><input type="text" id="set-tagline" class="form-control" placeholder="cth: Mendidik Generasi Unggul"></div>
+          <div class="form-group"><label>URL Logo <span class="form-hint" style="display:inline;font-size:11px">(Upload ke imgbb.com lalu paste link-nya)</span></label><input type="text" id="set-logo" class="form-control" placeholder="https://..."></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:15px;font-weight:800;color:var(--primary);margin-bottom:20px">🔧 Pengaturan SPMB</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Kuota Penerimaan</label><input type="number" id="set-kuota" class="form-control" placeholder="cth: 100"></div>
+            <div class="form-group"><label>Status Link Pendaftaran</label>
+              <select id="set-link" class="form-control"><option value="true">🟢 Aktif</option><option value="false">🔴 Tutup</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Pesan Saat Link Ditutup</label><textarea id="set-pesan" class="form-control" rows="2" placeholder="cth: Pendaftaran telah ditutup."></textarea></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3 style="font-size:15px;font-weight:800;color:var(--primary);margin-bottom:20px">🔑 Ganti Password</h3>
+          <div class="form-group"><label>Password Lama</label><input type="password" id="set-oldpass" class="form-control"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Password Baru</label><input type="password" id="set-newpass" class="form-control"></div>
+            <div class="form-group"><label>Konfirmasi Password</label><input type="password" id="set-confpass" class="form-control"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="doChangePassword()">🔑 Ganti Password</button>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary btn-lg" onclick="savePengaturan()">💾 Simpan Pengaturan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Link Pendaftaran -->
+    <div id="pg-linkDaftar" class="admin-pg" style="display:none">
+      <div class="page-header"><div><h2>Link Pendaftaran</h2><p>Bagikan link ini kepada calon siswa</p></div></div>
+      <div class="page-body" style="max-width:640px">
+        <div class="card" style="text-align:center">
+          <div style="font-size:48px;margin-bottom:12px">🔗</div>
+          <h3 style="font-size:16px;font-weight:800;color:var(--primary);margin-bottom:8px">Link Formulir Pendaftaran</h3>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Bagikan link di bawah ini kepada calon siswa agar mereka bisa mengisi formulir pendaftaran online.</p>
+          <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;font-family:monospace;font-size:13px;color:var(--primary);word-break:break-all;margin-bottom:16px" id="linkDisplay">-</div>
+          <div style="display:flex;gap:10px;justify-content:center">
+            <button class="btn btn-primary" onclick="copyLink()">📋 Salin Link</button>
+            <button class="btn btn-ghost" onclick="openLink()">🌐 Buka di Browser</button>
+          </div>
+          <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+            <p style="font-size:12px;color:var(--text3)">Status link pendaftaran dapat diubah di menu <strong>Pengaturan</strong></p>
+            <div id="linkStatusBadge" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ PUBLIC PAGE ═════════════════════════════════════ -->
+<div id="publicPage" class="view" style="display:none">
+  <div id="pubHeaderSection" class="pub-header">
+    <div class="pub-logo-wrap" id="pubLogoWrap"><span class="pub-logo-icon">🏫</span></div>
+    <div class="pub-school-name" id="pubSchoolName">Nama Sekolah</div>
+    <div class="pub-school-addr" id="pubSchoolAddr">Alamat Sekolah</div>
+    <div class="pub-tagline" id="pubTagline">SPMB 2025/2026</div>
+  </div>
+  <div class="pub-ribbon">
+    <span class="dot"></span>
+    <span id="pubRibbonText">Formulir Pendaftaran Siswa Baru — Tahun Ajaran 2025/2026</span>
+    <span class="dot"></span>
+  </div>
+  <div class="pub-form-wrap">
+    <div class="pub-form-card" id="pubFormCard">
+      <div class="pub-form-header">
+        <h3>📝 Formulir Pendaftaran Online</h3>
+        <p>Isi semua data dengan benar sesuai dokumen resmi</p>
+        <div class="pub-form-steps">
+          <div class="pub-step active" id="step-1">1. Data Diri</div>
+          <div class="pub-step" id="step-2">2. Kontak & Asal</div>
+          <div class="pub-step" id="step-3">3. Upload Dokumen</div>
+        </div>
+      </div>
+      <div class="pub-form-body">
+
+        <!-- Step 1: Data Diri -->
+        <div class="pub-form-section active" id="sec-1">
+          <div class="pub-section-title">👤 Data Diri</div>
+          <div class="form-group"><label>Nama Lengkap <span class="req">*</span></label><input type="text" id="f-nama" class="form-control" placeholder="Sesuai ijazah/akta kelahiran"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Tempat Lahir <span class="req">*</span></label><input type="text" id="f-tmpat" class="form-control" placeholder="Nama kota/kabupaten"></div>
+            <div class="form-group"><label>Tanggal Lahir <span class="req">*</span></label><input type="date" id="f-tgl" class="form-control"></div>
+          </div>
+          <div class="form-group"><label>NISN <span class="req">*</span></label><input type="text" id="f-nisn" class="form-control" placeholder="10 digit Nomor Induk Siswa Nasional" maxlength="10"></div>
+          <div class="form-group"><label>Nama Ibu Kandung <span class="req">*</span></label><input type="text" id="f-ibu" class="form-control" placeholder="Sesuai Kartu Keluarga"></div>
+          <div class="pub-nav"><div></div><button class="btn btn-primary btn-lg" onclick="nextStep(2)">Lanjut ➜</button></div>
+        </div>
+
+        <!-- Step 2: Kontak -->
+        <div class="pub-form-section" id="sec-2">
+          <div class="pub-section-title">📞 Kontak & Asal Daerah</div>
+          <div class="form-row">
+            <div class="form-group"><label>No. HP Sendiri <span class="req">*</span></label><input type="tel" id="f-hp" class="form-control" placeholder="cth: 08123456789"></div>
+            <div class="form-group"><label>No. HP Orang Tua/Wali <span class="req">*</span></label><input type="tel" id="f-hportu" class="form-control" placeholder="cth: 08123456789"></div>
+          </div>
+          <div class="form-group"><label>Nama Desa/Kelurahan <span class="req">*</span></label><input type="text" id="f-desa" class="form-control" placeholder="cth: Desa Tatakalai"></div>
+          <div class="pub-nav">
+            <button class="btn btn-ghost btn-lg" onclick="nextStep(1)">← Kembali</button>
+            <button class="btn btn-primary btn-lg" onclick="nextStep(3)">Lanjut ➜</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Upload -->
+        <div class="pub-form-section" id="sec-3">
+          <div class="pub-section-title">📎 Upload Dokumen</div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Upload dokumen di bawah ini. Dokumen yang ditandai <strong style="color:var(--danger)">wajib</strong> harus diunggah.</p>
+          <div id="uploadZones"></div>
+          <div class="pub-nav">
+            <button class="btn btn-ghost btn-lg" onclick="nextStep(2)">← Kembali</button>
+            <button class="btn btn-accent btn-lg" onclick="submitDaftar()" id="submitBtn">✅ Kirim Pendaftaran</button>
+          </div>
+        </div>
+
+        <!-- Success -->
+        <div class="pub-form-section" id="sec-success">
+          <div class="success-wrap">
+            <div class="success-icon">🎉</div>
+            <h3>Pendaftaran Berhasil!</h3>
+            <p>Data Anda telah berhasil dikirim ke panitia SPMB.</p>
+            <p>Simpan nomor pendaftaran Anda:</p>
+            <div class="success-id" id="successId">-</div>
+            <p style="font-size:12px;color:var(--text3)">Tunjukkan nomor ini saat datang ke sekolah untuk melengkapi berkas.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- Tutup -->
+  <div id="pubTutupCard" class="tutup-wrap" style="display:none">
+    <div class="tutup-card">
+      <div style="font-size:56px;margin-bottom:16px">🚫</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--primary);font-weight:800;margin-bottom:8px">Pendaftaran Ditutup</h3>
+      <p style="font-size:14px;color:var(--text2);line-height:1.7" id="tutupMsg">Pendaftaran telah ditutup.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══════════════════════════════════════════ -->
+<!-- Modal Detail Pendaftar -->
+<div class="modal-overlay" id="modalDetail">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head"><h3>📋 Detail Pendaftar</h3><button class="modal-close" onclick="closeModal('modalDetail')">✕</button></div>
+    <div class="modal-body" id="modalDetailBody"></div>
+    <div class="modal-foot">
+      <select class="form-control" style="width:auto" id="detailStatusSel">
+        <option value="Baru">Baru</option><option value="Diverifikasi">Diverifikasi</option>
+        <option value="Diterima">Diterima</option><option value="Ditolak">Ditolak</option>
+      </select>
+      <input type="text" class="form-control" style="flex:1" id="detailCatatan" placeholder="Catatan (opsional)">
+      <button class="btn btn-primary btn-sm" onclick="saveDetailStatus()">💾 Simpan</button>
+      <button class="btn btn-danger btn-sm" onclick="hapusPendaftar()">🗑️</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Persyaratan -->
+<div class="modal-overlay" id="modalPersyaratan">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><h3 id="mpTitle">Tambah Persyaratan</h3><button class="modal-close" onclick="closeModal('modalPersyaratan')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="mp-id">
+      <div class="form-group"><label>Nama Dokumen <span class="req">*</span></label><input type="text" id="mp-nama" class="form-control" placeholder="cth: Kartu Keluarga"></div>
+      <div class="form-group"><label>Deskripsi</label><input type="text" id="mp-deskripsi" class="form-control" placeholder="Penjelasan singkat"></div>
+      <div class="form-group"><label>Urutan Tampil</label><input type="number" id="mp-urutan" class="form-control" value="0"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="mp-wajib" style="width:16px;height:16px">
+        <label for="mp-wajib" style="font-size:13px;font-weight:600;color:var(--text);text-transform:none;letter-spacing:0">Dokumen Wajib</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modalPersyaratan')">Batal</button>
+      <button class="btn btn-primary" onclick="savePersyaratan()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CORE
+// ════════════════════════════════════════════════════
+const BASE = '/api';
+const APP = { user: null, settings: {}, pendaftarAll: [], currentDetailId: null };
+
+async function api(endpoint, action, params={}) {
+  const r = await fetch(`${BASE}/${endpoint}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action, ...params})
+  });
+  return r.json();
+}
+
+function toast(msg, type='info', dur=3500) {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  document.getElementById('toastWrap').appendChild(t);
+  setTimeout(() => t.remove(), dur);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function formatDate(d) {
+  if (!d) return '-';
+  try { return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}); } catch { return d; }
+}
+
+function badgeStatus(s) {
+  const m = {Baru:'badge-baru',Diverifikasi:'badge-diverifikasi',Diterima:'badge-diterima',Ditolak:'badge-ditolak'};
+  return `<span class="badge ${m[s]||'badge-baru'}">${s||'Baru'}</span>`;
+}
+
+// ════════════════════════════════════════════════════
+// ROUTING — admin vs public
+// ════════════════════════════════════════════════════
+async function init() {
+  const path = window.location.pathname;
+  // Jika URL mengandung /daftar atau ada param ?daftar, tampilkan halaman publik
+  if (path.endsWith('/daftar') || path.includes('/daftar') || new URLSearchParams(location.search).has('daftar')) {
+    await loadPublicPage();
+  } else {
+    // Cek session
+    const saved = sessionStorage.getItem('spmb_user');
+    if (saved) {
+      APP.user = JSON.parse(saved);
+      showAdmin();
+    } else {
+      showView('loginPage');
+    }
+  }
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.style.display='none');
+  document.getElementById(id).style.display='flex';
+  if (id === 'adminPage') document.getElementById(id).style.display='flex';
+  if (id === 'loginPage') document.getElementById(id).style.display='flex';
+  if (id === 'publicPage') document.getElementById(id).style.display='flex';
+}
+
+// ════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  if (!username||!password) { toast('Isi username dan password','warning'); return; }
+  const r = await api('auth','login',{username,password});
+  if (!r.success) { toast(r.message,'error'); return; }
+  APP.user = r;
+  sessionStorage.setItem('spmb_user', JSON.stringify(r));
+  showAdmin();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && document.getElementById('loginPage').style.display!=='none') doLogin();
+});
+
+function logout() {
+  sessionStorage.removeItem('spmb_user');
+  APP.user = null;
+  showView('loginPage');
+}
+
+async function doChangePassword() {
+  const op=document.getElementById('set-oldpass').value;
+  const np=document.getElementById('set-newpass').value;
+  const cp=document.getElementById('set-confpass').value;
+  if (!op||!np) { toast('Isi password lama dan baru','warning'); return; }
+  if (np!==cp) { toast('Konfirmasi password tidak cocok','error'); return; }
+  if (np.length<6) { toast('Password minimal 6 karakter','warning'); return; }
+  const r = await api('auth','changePassword',{username:APP.user.username,oldPassword:op,newPassword:np});
+  toast(r.message, r.success?'success':'error');
+  if (r.success) { document.getElementById('set-oldpass').value=''; document.getElementById('set-newpass').value=''; document.getElementById('set-confpass').value=''; }
+}
+
+// ════════════════════════════════════════════════════
+// ADMIN SHELL
+// ════════════════════════════════════════════════════
+async function showAdmin() {
+  showView('adminPage');
+  document.getElementById('suName').textContent = APP.user.nama||'Admin';
+  document.getElementById('suAv').textContent = (APP.user.nama||'A')[0].toUpperCase();
+  await loadSettings();
+  showPage('dashboard');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.admin-pg').forEach(p => p.style.display='none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('pg-'+name).style.display='block';
+  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  if (name==='dashboard') loadDashboard();
+  if (name==='pendaftar') loadPendaftar();
+  if (name==='fileLengkap') loadFileLengkap();
+  if (name==='persyaratan') loadPersyaratan();
+  if (name==='pengaturan') loadPengaturanForm();
+  if (name==='linkDaftar') loadLinkDaftar();
+}
+
+// ════════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════════
+async function loadSettings() {
+  const r = await api('setting','get');
+  if (r.success) {
+    APP.settings = r.data;
+    const n = r.data['NAMA_SEKOLAH']||'SPMB SMK';
+    document.getElementById('sideSchoolName').textContent = n.length>18?n.substring(0,18)+'...':n;
+    document.getElementById('sideYear').textContent = 'T.A. '+(r.data['TAHUN_AJARAN']||'2025/2026');
+  }
+}
+
+function loadPengaturanForm() {
+  const s = APP.settings;
+  document.getElementById('set-nama').value   = s['NAMA_SEKOLAH']||'';
+  document.getElementById('set-npsn').value   = s['NPSN']||'';
+  document.getElementById('set-tahun').value  = s['TAHUN_AJARAN']||'';
+  document.getElementById('set-alamat').value = s['ALAMAT_SEKOLAH']||'';
+  document.getElementById('set-tagline').value= s['TAGLINE']||'';
+  document.getElementById('set-logo').value   = s['LOGO_URL']||'';
+  document.getElementById('set-kuota').value  = s['KUOTA']||'100';
+  document.getElementById('set-link').value   = s['LINK_AKTIF']||'true';
+  document.getElementById('set-pesan').value  = s['PESAN_TUTUP']||'';
+}
+
+async function savePengaturan() {
+  const settings = {
+    NAMA_SEKOLAH:   document.getElementById('set-nama').value.trim(),
+    NPSN:           document.getElementById('set-npsn').value.trim(),
+    TAHUN_AJARAN:   document.getElementById('set-tahun').value.trim(),
+    ALAMAT_SEKOLAH: document.getElementById('set-alamat').value.trim(),
+    TAGLINE:        document.getElementById('set-tagline').value.trim(),
+    LOGO_URL:       document.getElementById('set-logo').value.trim(),
+    KUOTA:          document.getElementById('set-kuota').value.trim(),
+    LINK_AKTIF:     document.getElementById('set-link').value,
+    PESAN_TUTUP:    document.getElementById('set-pesan').value.trim()
+  };
+  const r = await api('setting','update',{settings});
+  toast(r.message, r.success?'success':'error');
+  if (r.success) { await loadSettings(); }
+}
+
+function loadLinkDaftar() {
+  const base = window.location.origin + window.location.pathname.replace(/\/?$/, '');
+  const link = base.replace(/index\.html$/, '') + '?daftar';
+  document.getElementById('linkDisplay').textContent = link;
+  const aktif = APP.settings['LINK_AKTIF'] !== 'false';
+  document.getElementById('linkStatusBadge').innerHTML = aktif
+    ? '<span class="badge badge-diterima">🟢 Link Aktif — Pendaftaran Terbuka</span>'
+    : '<span class="badge badge-ditolak">🔴 Link Nonaktif — Pendaftaran Ditutup</span>';
+}
+
+function copyLink() {
+  const link = document.getElementById('linkDisplay').textContent;
+  navigator.clipboard.writeText(link).then(() => toast('Link berhasil disalin!','success')).catch(() => toast('Gagal salin link','error'));
+}
+function openLink() {
+  window.open(document.getElementById('linkDisplay').textContent, '_blank');
+}
+
+// ════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════
+async function loadDashboard() {
+  const r = await api('pendaftar','dashboard');
+  if (!r.success) return;
+  const d = r.data;
+  document.getElementById('st-total').textContent = d.total;
+  document.getElementById('st-baru').textContent = d.baru;
+  document.getElementById('st-verif').textContent = d.diverifikasi;
+  document.getElementById('st-terima').textContent = d.diterima;
+  document.getElementById('st-tolak').textContent = d.ditolak;
+
+  // Desa chart
+  const dl = document.getElementById('desaList');
+  if (!d.perDesa.length) { dl.innerHTML='<p style="color:var(--text3);font-size:13px">Belum ada data</p>'; }
+  else {
+    const max = d.perDesa[0].jumlah;
+    dl.innerHTML = d.perDesa.slice(0,10).map(x=>`
+      <div class="desa-item">
+        <span class="di-name" title="${x.desa}">${x.desa}</span>
+        <div class="desa-bar-wrap"><div class="desa-bar" style="width:${Math.round(x.jumlah/max*100)}%"></div></div>
+        <span class="di-count">${x.jumlah}</span>
+      </div>`).join('');
+  }
+
+  // Recent
+  const rl = document.getElementById('recentList');
+  rl.innerHTML = d.recent.length ? `<div style="display:flex;flex-direction:column;gap:6px">`+d.recent.map(p=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDetail('${p.id}')">
+      <div style="width:34px;height:34px;border-radius:8px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${p.nama_lengkap[0]}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nama_lengkap}</div><div style="font-size:11px;color:var(--text3)">${p.nama_desa||'-'}</div></div>
+      ${badgeStatus(p.status)}
+    </div>`).join('')+`</div>` : '<p style="color:var(--text3);font-size:13px">Belum ada pendaftar</p>';
+}
+
+// ════════════════════════════════════════════════════
+// PENDAFTAR
+// ════════════════════════════════════════════════════
+async function loadPendaftar() {
+  const r = await api('pendaftar','getAll',{});
+  if (!r.success) return;
+  APP.pendaftarAll = r.data;
+  renderPendaftarTable(r.data);
+}
+
+function filterPendaftar() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const s = document.getElementById('statusFilter').value;
+  const filtered = APP.pendaftarAll.filter(p =>
+    (s==='Semua' || p.status===s) &&
+    (p.nama_lengkap||'').toLowerCase().includes(q)
+  );
+  renderPendaftarTable(filtered);
+}
+
+function renderPendaftarTable(data) {
+  const tbody = document.getElementById('pendaftarTable');
+  if (!data.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">Tidak ada data</td></tr>'; return; }
+  tbody.innerHTML = data.map((p,i) => `
+    <tr>
+      <td style="color:var(--text3)">${i+1}</td>
+      <td><strong>${p.nama_lengkap}</strong><br><span style="font-size:11px;color:var(--text3)">${p.nisn||'-'}</span></td>
+      <td>${p.nisn||'-'}</td>
+      <td>${p.nama_desa||'-'}</td>
+      <td>${p.no_hp||'-'}</td>
+      <td style="font-size:11px">${formatDate(p.created_at)}</td>
+      <td>${badgeStatus(p.status)}</td>
+      <td><button class="btn btn-ghost btn-sm btn-icon" onclick="openDetail('${p.id}')" title="Lihat Detail">👁️</button></td>
+    </tr>`).join('');
+}
+
+async function openDetail(id) {
+  APP.currentDetailId = id;
+  const r = await api('pendaftar','getOne',{id});
+  if (!r.success) { toast(r.message,'error'); return; }
+  const p = r.data; const files = r.files;
+
+  // Ambil info kelengkapan file
+  const rf = await api('pendaftar','getFileLengkap',{id_pendaftar:id});
+
+  document.getElementById('detailStatusSel').value = p.status||'Baru';
+  document.getElementById('detailCatatan').value = p.catatan||'';
+
+  const fileHtml = (rf.data||[]).map(ps => {
+    const f = ps.file;
+    if (f) {
+      return `<div class="file-item uploaded">
+        <span class="fi-icon">✅</span>
+        <div class="fi-info"><div class="fi-name">${ps.nama}</div><div class="fi-desc">${f.nama_file}</div></div>
+        <a href="${f.url}" target="_blank" class="btn btn-ghost btn-sm">⬇️ Unduh</a>
+      </div>`;
+    } else {
+      return `<div class="file-item missing">
+        <span class="fi-icon">❌</span>
+        <div class="fi-info"><div class="fi-name">${ps.nama}${ps.wajib?' <span style="color:var(--danger);font-size:10px">WAJIB</span>':''}</div><div class="fi-desc">Belum diunggah</div></div>
+      </div>`;
+    }
+  }).join('');
+
+  document.getElementById('modalDetailBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field"><div class="df-label">Nama Lengkap</div><div class="df-val">${p.nama_lengkap}</div></div>
+      <div class="detail-field"><div class="df-label">NISN</div><div class="df-val">${p.nisn||'-'}</div></div>
+      <div class="detail-field"><div class="df-label">Tempat, Tgl Lahir</div><div class="df-val">${p.tempat_lahir||'-'}, ${formatDate(p.tanggal_lahir)}</div></div>
+      <div class="detail-field"><div class="df-label">Nama Ibu Kandung</div><div class="df-val">${p.nama_ibu||'-'}</div></div>
+      <div class="detail-field"><div class="df-label">No. HP Siswa</div><div class="df-val">${p.no_hp||'-'}</div></div>
+      <div class="detail-field"><div class="df-label">No. HP Ortu/Wali</div><div class="df-val">${p.no_hp_ortu||'-'}</div></div>
+      <div class="detail-field" style="grid-column:1/-1"><div class="df-label">Asal Desa</div><div class="df-val">${p.nama_desa||'-'}</div></div>
+    </div>
+    <h4 style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:10px">📎 Dokumen</h4>
+    <div style="display:flex;flex-direction:column;gap:8px">${fileHtml||'<p style="color:var(--text3);font-size:13px">Tidak ada persyaratan upload</p>'}</div>`;
+  openModal('modalDetail');
+}
+
+async function saveDetailStatus() {
+  const id = APP.currentDetailId;
+  const status = document.getElementById('detailStatusSel').value;
+  const catatan = document.getElementById('detailCatatan').value;
+  const r = await api('pendaftar','updateStatus',{id,status,catatan});
+  toast(r.message, r.success?'success':'error');
+  if (r.success) { closeModal('modalDetail'); loadPendaftar(); loadDashboard(); }
+}
+
+async function hapusPendaftar() {
+  if (!confirm('Hapus permanen data pendaftar ini beserta semua file-nya?')) return;
+  const r = await api('pendaftar','hapus',{id:APP.currentDetailId});
+  toast(r.message, r.success?'success':'error');
+  if (r.success) { closeModal('modalDetail'); loadPendaftar(); loadDashboard(); }
+}
+
+// ════════════════════════════════════════════════════
+// FILE BELUM LENGKAP
+// ════════════════════════════════════════════════════
+async function loadFileLengkap() {
+  const [rp, rps] = await Promise.all([
+    api('pendaftar','getAll',{}),
+    api('persyaratan','getAll')
+  ]);
+  if (!rp.success || !rps.success) return;
+  const persyaratan = rps.data;
+  if (!persyaratan.length) {
+    document.getElementById('fileLengkapList').innerHTML = '<div class="card" style="text-align:center;color:var(--text3)">Belum ada persyaratan upload yang dikonfigurasi.</div>';
+    return;
+  }
+
+  // Ambil semua file sekaligus
+  let html = '';
+  for (const p of rp.data) {
+    const rf = await api('pendaftar','getFileLengkap',{id_pendaftar:p.id});
+    const belumUpload = (rf.data||[]).filter(x => !x.sudahUpload);
+    if (!belumUpload.length) continue;
+    html += `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:38px;height:38px;border-radius:9px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">${p.nama_lengkap[0]}</div>
+        <div><div style="font-size:14px;font-weight:800">${p.nama_lengkap}</div><div style="font-size:11px;color:var(--text3)">${p.nama_desa||'-'} • ${p.no_hp||'-'}</div></div>
+        ${badgeStatus(p.status)}
+        <button class="btn btn-ghost btn-sm" onclick="openDetail('${p.id}')" style="margin-left:auto">👁️ Detail</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${belumUpload.map(x=>`<span class="badge badge-ditolak">❌ ${x.nama}${x.wajib?' (WAJIB)':''}</span>`).join('')}
+      </div>
+    </div>`;
+  }
+  document.getElementById('fileLengkapList').innerHTML = html || '<div class="card" style="text-align:center;color:var(--success)">🎉 Semua pendaftar sudah mengunggah dokumen!</div>';
+}
+
+// ════════════════════════════════════════════════════
+// PERSYARATAN
+// ════════════════════════════════════════════════════
+async function loadPersyaratan() {
+  const r = await api('persyaratan','getAll');
+  if (!r.success) return;
+  const list = document.getElementById('persyaratanList');
+  if (!r.data.length) { list.innerHTML='<div class="card" style="text-align:center;color:var(--text3)">Belum ada persyaratan. Klik Tambah Persyaratan.</div>'; return; }
+  list.innerHTML = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Nama Dokumen</th><th>Deskripsi</th><th>Wajib</th><th>Urutan</th><th>Aksi</th></tr></thead><tbody>'
+    + r.data.map((p,i)=>`<tr>
+      <td>${i+1}</td><td><strong>${p.nama}</strong></td><td style="color:var(--text3)">${p.deskripsi||'-'}</td>
+      <td>${p.wajib?'<span class="badge badge-ditolak">Wajib</span>':'<span class="badge badge-baru">Opsional</span>'}</td>
+      <td>${p.urutan}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="editPersyaratan('${p.id}','${p.nama.replace(/'/g,"\\'")}','${(p.deskripsi||'').replace(/'/g,"\\'")}',${p.wajib},${p.urutan})">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="hapusPersyaratan('${p.id}')">🗑️</button>
+      </td></tr>`).join('')
+    + '</tbody></table></div>';
+}
+
+function openModalPersyaratan() {
+  document.getElementById('mpTitle').textContent = 'Tambah Persyaratan';
+  document.getElementById('mp-id').value = '';
+  document.getElementById('mp-nama').value = '';
+  document.getElementById('mp-deskripsi').value = '';
+  document.getElementById('mp-urutan').value = '0';
+  document.getElementById('mp-wajib').checked = false;
+  openModal('modalPersyaratan');
+}
+
+function editPersyaratan(id, nama, deskripsi, wajib, urutan) {
+  document.getElementById('mpTitle').textContent = 'Edit Persyaratan';
+  document.getElementById('mp-id').value = id;
+  document.getElementById('mp-nama').value = nama;
+  document.getElementById('mp-deskripsi').value = deskripsi;
+  document.getElementById('mp-urutan').value = urutan;
+  document.getElementById('mp-wajib').checked = wajib;
+  openModal('modalPersyaratan');
+}
+
+async function savePersyaratan() {
+  const id = document.getElementById('mp-id').value;
+  const nama = document.getElementById('mp-nama').value.trim();
+  if (!nama) { toast('Nama dokumen wajib diisi','warning'); return; }
+  const params = { nama, deskripsi: document.getElementById('mp-deskripsi').value.trim(), wajib: document.getElementById('mp-wajib').checked, urutan: parseInt(document.getElementById('mp-urutan').value)||0 };
+  const r = await api('persyaratan', id?'edit':'tambah', id?{id,...params}:params);
+  toast(r.message, r.success?'success':'error');
+  if (r.success) { closeModal('modalPersyaratan'); loadPersyaratan(); }
+}
+
+async function hapusPersyaratan(id) {
+  if (!confirm('Hapus persyaratan ini?')) return;
+  const r = await api('persyaratan','hapus',{id});
+  toast(r.message, r.success?'success':'error');
+  if (r.success) loadPersyaratan();
+}
+
+// ════════════════════════════════════════════════════
+// EXPORT EXCEL
+// ════════════════════════════════════════════════════
+async function exportExcel() {
+  const r = await api('pendaftar','getAll',{});
+  if (!r.success || !r.data.length) { toast('Tidak ada data untuk diekspor','warning'); return; }
+  const rows = r.data.map((p,i) => ({
+    No: i+1,
+    'Nama Lengkap': p.nama_lengkap,
+    'NISN': p.nisn||'',
+    'Tempat Lahir': p.tempat_lahir||'',
+    'Tanggal Lahir': p.tanggal_lahir||'',
+    'Nama Ibu Kandung': p.nama_ibu||'',
+    'No. HP Siswa': p.no_hp||'',
+    'No. HP Ortu/Wali': p.no_hp_ortu||'',
+    'Asal Desa': p.nama_desa||'',
+    'Status': p.status||'',
+    'Catatan': p.catatan||'',
+    'Tanggal Daftar': p.created_at ? new Date(p.created_at).toLocaleDateString('id-ID') : ''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data Pendaftar');
+  XLSX.writeFile(wb, `SPMB_Pendaftar_${new Date().toISOString().split('T')[0]}.xlsx`);
+  toast('File Excel berhasil diunduh!','success');
+}
+
+// ════════════════════════════════════════════════════
+// PUBLIC PAGE
+// ════════════════════════════════════════════════════
+let pubSettings = {}, pubPersyaratan = [], pubStep = 1, uploadedFiles = {};
+
+async function loadPublicPage() {
+  showView('publicPage');
+  const r = await api('pendaftar','getPublicInfo');
+  if (!r.success) return;
+  pubSettings = r.setting;
+  pubPersyaratan = r.persyaratan;
+
+  // Set header
+  const nama = pubSettings['NAMA_SEKOLAH']||'Nama Sekolah';
+  const addr = [pubSettings['NPSN']?'NPSN: '+pubSettings['NPSN']:'', pubSettings['ALAMAT_SEKOLAH']||''].filter(Boolean).join(' • ');
+  document.getElementById('pubSchoolName').textContent = nama;
+  document.getElementById('pubSchoolAddr').textContent = addr;
+  document.getElementById('pubTagline').textContent = 'SPMB ' + (pubSettings['TAHUN_AJARAN']||'2025/2026');
+  document.getElementById('pubRibbonText').textContent = 'Formulir Pendaftaran Siswa Baru — Tahun Ajaran ' + (pubSettings['TAHUN_AJARAN']||'2025/2026');
+  document.title = `Pendaftaran Siswa Baru — ${nama}`;
+
+  // Logo
+  const logoUrl = pubSettings['LOGO_URL'];
+  if (logoUrl) {
+    document.getElementById('pubLogoWrap').innerHTML = `<img src="${logoUrl}" alt="logo">`;
+  }
+
+  // Cek apakah pendaftaran aktif
+  if (pubSettings['LINK_AKTIF'] === 'false') {
+    document.getElementById('pubFormCard').style.display = 'none';
+    document.getElementById('pubTutupCard').style.display = 'flex';
+    document.getElementById('tutupMsg').textContent = pubSettings['PESAN_TUTUP']||'Pendaftaran telah ditutup.';
+    return;
+  }
+
+  // Build upload zones
+  buildUploadZones();
+}
+
+function buildUploadZones() {
+  const wrap = document.getElementById('uploadZones');
+  if (!pubPersyaratan.length) {
+    wrap.innerHTML = '<p style="color:var(--text2);font-size:13px;text-align:center">Tidak ada dokumen yang perlu diunggah.</p>';
+    return;
+  }
+  wrap.innerHTML = pubPersyaratan.map(p => `
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${p.nama} ${p.wajib?'<span style="color:var(--danger);font-size:11px">*Wajib</span>':'<span style="color:var(--text3);font-size:11px">(Opsional)</span>'}</div>
+      ${p.deskripsi?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">${p.deskripsi}</div>`:''}
+      <label class="upload-zone" id="uz-${p.id}" onclick="document.getElementById('ufi-${p.id}').click()">
+        <input type="file" id="ufi-${p.id}" accept="image/jpeg,image/png,application/pdf" onchange="handleFileSelect('${p.id}','${p.nama}',this)">
+        <div id="uzc-${p.id}">
+          <div class="uz-icon">📄</div>
+          <div class="uz-text">Klik untuk pilih file</div>
+          <div class="uz-sub">JPEG, PNG, atau PDF • Maks. 5MB</div>
+        </div>
+      </label>
+    </div>`).join('');
+}
+
+function handleFileSelect(id, nama, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { toast('File terlalu besar. Maks 5MB','error'); input.value=''; return; }
+  uploadedFiles[id] = { file, nama };
+  const ext = file.name.split('.').pop().toUpperCase();
+  const preview = file.type.startsWith('image/') ? `<img src="${URL.createObjectURL(file)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">` : `<span style="font-size:36px">📄</span>`;
+  document.getElementById('uzc-'+id).innerHTML = `<div class="uz-preview">${preview}<div><div class="uz-fname">✅ ${file.name}</div><div style="font-size:11px;color:var(--text3)">${ext} • ${(file.size/1024).toFixed(0)} KB</div></div></div>`;
+  document.getElementById('uz-'+id).classList.add('uploaded');
+}
+
+function nextStep(n) {
+  // Validasi step saat ini
+  if (pubStep === 1 && n === 2) {
+    const nama = document.getElementById('f-nama').value.trim();
+    const tmpat = document.getElementById('f-tmpat').value.trim();
+    const tgl = document.getElementById('f-tgl').value;
+    const nisn = document.getElementById('f-nisn').value.trim();
+    const ibu = document.getElementById('f-ibu').value.trim();
+    if (!nama||!tmpat||!tgl||!nisn||!ibu) { toast('Semua field data diri wajib diisi','warning'); return; }
+  }
+  if (pubStep === 2 && n === 3) {
+    const hp = document.getElementById('f-hp').value.trim();
+    const hportu = document.getElementById('f-hportu').value.trim();
+    const desa = document.getElementById('f-desa').value.trim();
+    if (!hp||!hportu||!desa) { toast('Semua field kontak wajib diisi','warning'); return; }
+  }
+  document.getElementById('sec-'+pubStep).classList.remove('active');
+  document.getElementById('step-'+pubStep).classList.remove('active');
+  document.getElementById('step-'+pubStep).classList.add('done');
+  pubStep = n;
+  document.getElementById('sec-'+pubStep).classList.add('active');
+  document.getElementById('step-'+pubStep).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+async function submitDaftar() {
+  // Cek file wajib
+  const missing = pubPersyaratan.filter(p => p.wajib && !uploadedFiles[p.id]);
+  if (missing.length) { toast('Dokumen wajib belum diunggah: '+missing.map(m=>m.nama).join(', '),'error',5000); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Mengirim...';
+
+  // 1. Simpan data pendaftar
+  const r = await api('pendaftar','daftar',{
+    nama_lengkap: document.getElementById('f-nama').value.trim(),
+    tempat_lahir: document.getElementById('f-tmpat').value.trim(),
+    tanggal_lahir: document.getElementById('f-tgl').value,
+    nisn: document.getElementById('f-nisn').value.trim(),
+    nama_ibu: document.getElementById('f-ibu').value.trim(),
+    no_hp: document.getElementById('f-hp').value.trim(),
+    no_hp_ortu: document.getElementById('f-hportu').value.trim(),
+    nama_desa: document.getElementById('f-desa').value.trim()
+  });
+
+  if (!r.success) { toast(r.message,'error'); btn.disabled=false; btn.textContent='✅ Kirim Pendaftaran'; return; }
+  const id_pendaftar = r.id;
+
+  // 2. Upload files
+  for (const [id_persyaratan, {file, nama}] of Object.entries(uploadedFiles)) {
+    btn.textContent = '⏳ Mengunggah '+nama+'...';
+    const base64 = await toBase64(file);
+    await api('pendaftar','uploadFile',{
+      id_pendaftar, id_persyaratan, nama_persyaratan: nama,
+      nama_file: file.name, base64, tipe: file.type, ukuran: file.size
+    });
+  }
+
+  // 3. Tampilkan sukses
+  document.getElementById('sec-'+pubStep).classList.remove('active');
+  document.getElementById('sec-success').classList.add('active');
+  document.getElementById('successId').textContent = id_pendaftar;
+}
+
+function toBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
