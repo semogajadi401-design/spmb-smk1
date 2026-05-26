@@ -122,10 +122,7 @@ tbody tr:hover{background:#F7FBFF}
 
 /* ── BADGE STATUS ── */
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge-baru{background:#EBF5FB;color:#2980B9}
-.badge-diverifikasi{background:#FEF9E7;color:#D68910}
-.badge-diterima{background:#EAFAF1;color:#27AE60}
-.badge-ditolak{background:#FDEDEC;color:#E74C3C}
+
 
 /* ── SEARCH & FILTER ── */
 .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
@@ -303,10 +300,7 @@ tbody tr:hover{background:#F7FBFF}
       <div class="page-body">
         <div class="stat-grid" id="statGrid">
           <div class="stat-card" style="--c:var(--primary)"><div class="sc-icon">👥</div><div class="sc-val" id="st-total">-</div><div class="sc-label">Total Pendaftar</div></div>
-          <div class="stat-card" style="--c:var(--info)"><div class="sc-icon">🆕</div><div class="sc-val" id="st-baru">-</div><div class="sc-label">Baru</div></div>
-          <div class="stat-card" style="--c:var(--warning)"><div class="sc-icon">🔍</div><div class="sc-val" id="st-verif">-</div><div class="sc-label">Diverifikasi</div></div>
-          <div class="stat-card" style="--c:var(--success)"><div class="sc-icon">✅</div><div class="sc-val" id="st-terima">-</div><div class="sc-label">Diterima</div></div>
-          <div class="stat-card" style="--c:var(--danger)"><div class="sc-icon">❌</div><div class="sc-val" id="st-tolak">-</div><div class="sc-label">Ditolak</div></div>
+          <div class="stat-card" style="--c:var(--info)"><div class="sc-icon">🆕</div><div class="sc-val" id="st-baru">-</div><div class="sc-label">Pendaftar Baru</div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
           <div class="card">
@@ -331,18 +325,14 @@ tbody tr:hover{background:#F7FBFF}
         <div class="toolbar">
           <div class="search-box"><input type="text" id="searchInput" placeholder="Cari nama pendaftar..." oninput="filterPendaftar()"></div>
           <select class="form-control" style="width:auto" id="statusFilter" onchange="filterPendaftar()">
-            <option value="Semua">Semua Status</option>
-            <option value="Baru">Baru</option>
-            <option value="Diverifikasi">Diverifikasi</option>
-            <option value="Diterima">Diterima</option>
-            <option value="Ditolak">Ditolak</option>
+            <option value="Semua">Semua</option>
           </select>
         </div>
         <div class="table-wrap">
           <table>
             <thead><tr>
               <th>#</th><th>Nama Lengkap</th><th>NISN</th><th>Asal Desa</th>
-              <th>No. HP</th><th>Tgl Daftar</th><th>Status</th><th>Aksi</th>
+              <th>No. HP</th><th>Tgl Daftar</th><th>Aksi</th>
             </tr></thead>
             <tbody id="pendaftarTable"></tbody>
           </table>
@@ -540,13 +530,7 @@ tbody tr:hover{background:#F7FBFF}
     <div class="modal-head"><h3>📋 Detail Pendaftar</h3><button class="modal-close" onclick="closeModal('modalDetail')">✕</button></div>
     <div class="modal-body" id="modalDetailBody"></div>
     <div class="modal-foot">
-      <select class="form-control" style="width:auto" id="detailStatusSel">
-        <option value="Baru">Baru</option><option value="Diverifikasi">Diverifikasi</option>
-        <option value="Diterima">Diterima</option><option value="Ditolak">Ditolak</option>
-      </select>
-      <input type="text" class="form-control" style="flex:1" id="detailCatatan" placeholder="Catatan (opsional)">
-      <button class="btn btn-primary btn-sm" onclick="saveDetailStatus()">💾 Simpan</button>
-      <button class="btn btn-danger btn-sm" onclick="hapusPendaftar()">🗑️</button>
+      <button class="btn btn-danger btn-sm" onclick="hapusPendaftar()">🗑️ Hapus</button>
     </div>
   </div>
 </div>
@@ -602,10 +586,6 @@ function formatDate(d) {
   try { return new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}); } catch { return d; }
 }
 
-function badgeStatus(s) {
-  const m = {Baru:'badge-baru',Diverifikasi:'badge-diverifikasi',Diterima:'badge-diterima',Ditolak:'badge-ditolak'};
-  return `<span class="badge ${m[s]||'badge-baru'}">${s||'Baru'}</span>`;
-}
 
 // ════════════════════════════════════════════════════
 // ROUTING — admin vs public
@@ -817,9 +797,6 @@ async function loadDashboard() {
   const d = r.data;
   document.getElementById('st-total').textContent = d.total;
   document.getElementById('st-baru').textContent = d.baru;
-  document.getElementById('st-verif').textContent = d.diverifikasi;
-  document.getElementById('st-terima').textContent = d.diterima;
-  document.getElementById('st-tolak').textContent = d.ditolak;
 
   // Desa chart
   const dl = document.getElementById('desaList');
@@ -840,9 +817,7 @@ async function loadDashboard() {
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDetail('${p.id}')">
       <div style="width:34px;height:34px;border-radius:8px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${p.nama_lengkap[0]}</div>
       <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nama_lengkap}</div><div style="font-size:11px;color:var(--text3)">${p.nama_desa||'-'}</div></div>
-      ${badgeStatus(p.status)}
     </div>`).join('')+`</div>` : '<p style="color:var(--text3);font-size:13px">Belum ada pendaftar</p>';
-}
 
 // ════════════════════════════════════════════════════
 // PENDAFTAR
@@ -856,9 +831,7 @@ async function loadPendaftar() {
 
 function filterPendaftar() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  const s = document.getElementById('statusFilter').value;
   const filtered = APP.pendaftarAll.filter(p =>
-    (s==='Semua' || p.status===s) &&
     (p.nama_lengkap||'').toLowerCase().includes(q)
   );
   renderPendaftarTable(filtered);
@@ -875,7 +848,6 @@ function renderPendaftarTable(data) {
       <td>${p.nama_desa||'-'}</td>
       <td>${p.no_hp||'-'}</td>
       <td style="font-size:11px">${formatDate(p.created_at)}</td>
-      <td>${badgeStatus(p.status)}</td>
       <td><button class="btn btn-ghost btn-sm btn-icon" onclick="openDetail('${p.id}')" title="Lihat Detail">👁️</button></td>
     </tr>`).join('');
 }
@@ -888,9 +860,6 @@ async function openDetail(id) {
 
   // Ambil info kelengkapan file
   const rf = await api('pendaftar','getFileLengkap',{id_pendaftar:id});
-
-  document.getElementById('detailStatusSel').value = p.status||'Baru';
-  document.getElementById('detailCatatan').value = p.catatan||'';
 
   const fileHtml = (rf.data||[]).map(ps => {
     const f = ps.file;
@@ -921,15 +890,6 @@ async function openDetail(id) {
     <h4 style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:10px">📎 Dokumen</h4>
     <div style="display:flex;flex-direction:column;gap:8px">${fileHtml||'<p style="color:var(--text3);font-size:13px">Tidak ada persyaratan upload</p>'}</div>`;
   openModal('modalDetail');
-}
-
-async function saveDetailStatus() {
-  const id = APP.currentDetailId;
-  const status = document.getElementById('detailStatusSel').value;
-  const catatan = document.getElementById('detailCatatan').value;
-  const r = await api('pendaftar','updateStatus',{id,status,catatan});
-  toast(r.message, r.success?'success':'error');
-  if (r.success) { closeModal('modalDetail'); loadPendaftar(); loadDashboard(); }
 }
 
 async function hapusPendaftar() {
@@ -964,11 +924,10 @@ async function loadFileLengkap() {
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <div style="width:38px;height:38px;border-radius:9px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">${p.nama_lengkap[0]}</div>
         <div><div style="font-size:14px;font-weight:800">${p.nama_lengkap}</div><div style="font-size:11px;color:var(--text3)">${p.nama_desa||'-'} • ${p.no_hp||'-'}</div></div>
-        ${badgeStatus(p.status)}
         <button class="btn btn-ghost btn-sm" onclick="openDetail('${p.id}')" style="margin-left:auto">👁️ Detail</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${belumUpload.map(x=>`<span class="badge badge-ditolak">❌ ${x.nama}${x.wajib?' (WAJIB)':''}</span>`).join('')}
+        ${belumUpload.map(x=>`<span class="badge" style="background:#FDEDEC;color:#E74C3C">❌ ${x.nama}${x.wajib?' (WAJIB)':''}</span>`).join('')}
       </div>
     </div>`;
   }
@@ -1048,8 +1007,6 @@ async function exportExcel() {
     'No. HP Siswa': p.no_hp||'',
     'No. HP Ortu/Wali': p.no_hp_ortu||'',
     'Asal Desa': p.nama_desa||'',
-    'Status': p.status||'',
-    'Catatan': p.catatan||'',
     'Tanggal Daftar': p.created_at ? new Date(p.created_at).toLocaleDateString('id-ID') : ''
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
