@@ -10,6 +10,7 @@ module.exports = async (req, res) => {
     if (action === 'getAll')        return res.json(await getAll(p));
     if (action === 'getOne')        return res.json(await getOne(p));
     if (action === 'updateStatus')  return res.json(await updateStatus(p));
+    if (action === 'uploadLogo') return res.json(await uploadLogo(p));
     if (action === 'hapus')         return res.json(await hapus(p));
     if (action === 'dashboard')     return res.json(await dashboard());
     if (action === 'getPublicInfo') return res.json(await getPublicInfo());
@@ -47,7 +48,15 @@ async function daftar({ nama_lengkap, tempat_lahir, tanggal_lahir, nisn, nama_ib
   if (error) return { success: false, message: 'Gagal mendaftar: ' + error.message };
   return { success: true, message: 'Pendaftaran berhasil!', id };
 }
-
+async function uploadLogo({ base64, tipe, ext }) {
+  const path = `logo/sekolah_${Date.now()}.${ext}`;
+  const buffer = Buffer.from(base64, 'base64');
+  const { error } = await supabase.storage
+    .from('spmb-files').upload(path, buffer, { contentType: tipe, upsert: true });
+  if (error) return { success: false, message: error.message };
+  const { data } = supabase.storage.from('spmb-files').getPublicUrl(path);
+  return { success: true, url: data.publicUrl };
+}
 // ── UPLOAD FILE ───────────────────────────────────────────
 async function uploadFile({ id_pendaftar, id_persyaratan, nama_persyaratan, nama_file, base64, tipe, ukuran }) {
   if (!id_pendaftar || !base64) return { success: false, message: 'Data tidak lengkap' };
